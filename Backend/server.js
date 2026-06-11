@@ -1,0 +1,32 @@
+import express from "express";
+import db from "./src/config/db.js";
+import studentRoutes from "./src/routes/studentRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
+import authRoutes from "./src/routes/authRoutes.js";
+
+const app = express();
+const PORT = process.env.PORT;
+
+app.use(express.json());
+app.use("/students", studentRoutes);
+app.use("/users",userRoutes);
+app.use("/auth", authRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Placement Management Portal API");
+});
+
+async function startServer() {
+  try {
+    const result = await db.query("SELECT NOW()");
+    console.log("Database Connected");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+startServer();
