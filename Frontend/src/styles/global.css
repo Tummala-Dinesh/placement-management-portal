@@ -1,0 +1,266 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --navy:         #0A1628;
+  --navy-mid:     #0F1F3D;
+  --navy-card:    rgba(255, 255, 255, 0.04);
+  --indigo:       #4F6EF7;
+  --indigo-light: #7B93FF;
+  --indigo-dark:  #2E4CD4;
+  --white:        #ffffff;
+  --slate:        #8892A4;
+  --slate-light:  #C4CADA;
+  --amber:        #F5A623;
+  --glass-bg:     rgba(10, 22, 40, 0.88);
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    18px;
+  --radius-xl:    24px;
+  --shadow-glow:  0 8px 32px rgba(79, 110, 247, 0.35);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+ 
+body {
+  background-color: var(--navy);
+  color: var(--white);
+  font-family: "Inter", sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+ 
+a {
+  text-decoration: none;
+  color: inherit;
+}
+ 
+button {
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+}
+ 
+img {
+  max-width: 100%;
+  display: block;
+}
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+ 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+ 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+ 
+@keyframes meshFloat {
+  0%,  100% { transform: scale(1)    translate(0, 0); }
+  50%        { transform: scale(1.05) translate(-2%, 2%); }
+}
+ 
+@keyframes pulse-ring {
+  0%,  100% { box-shadow: 0 0 0 0   rgba(79, 110, 247, 0.4); }
+  50%        { box-shadow: 0 0 0 12px rgba(79, 110, 247, 0); }
+}
+ 
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--indigo);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 11px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  animation: pulse-ring 2.8s infinite;
+}
+.btn-primary:hover {
+  background: var(--indigo-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+  animation: none;
+}
+ 
+.btn-outline {
+  background: transparent;
+  color: var(--slate-light);
+  border: 1.5px solid rgba(196, 202, 218, 0.3);
+  border-radius: var(--radius-md);
+  padding: 11px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.btn-outline:hover {
+  border-color: var(--indigo);
+  color: var(--white);
+  background: rgba(79, 110, 247, 0.1);
+}
+
+.nav-link {
+  position: relative;
+  color: var(--slate-light);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 6px 0;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: var(--indigo);
+  transition: width 0.25s;
+  border-radius: 2px;
+}
+.nav-link:hover        { color: var(--white); }
+.nav-link:hover::after { width: 100%; }
+
+.feature-card {
+  background: var(--navy-card);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(79, 110, 247, 0.4);
+  box-shadow: 0 20px 48px rgba(79, 110, 247, 0.1);
+}
+ 
+.step-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+}
+ 
+.stat-card {
+  background: rgba(79, 110, 247, 0.08);
+  border: 1px solid rgba(79, 110, 247, 0.2);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  text-align: center;
+  animation: fadeUp 0.6s ease both;
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--white);
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus {
+  border-color: var(--indigo);
+}
+.form-input::placeholder {
+  color: var(--slate);
+}
+
+.section-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 32px;
+}
+ 
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--indigo);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+ 
+.section-title {
+  font-family: "Sora", sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+}
+ 
+.section-subtitle {
+  font-size: 17px;
+  color: var(--slate);
+  line-height: 1.75;
+  max-width: 520px;
+  margin: 16px auto 0;
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(79, 110, 247, 0.12);
+  border: 1px solid rgba(79, 110, 247, 0.3);
+  border-radius: 99px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--indigo-light);
+  font-weight: 500;
+}
+ 
+.tech-tag {
+  background: rgba(79, 110, 247, 0.1);
+  border: 1px solid rgba(79, 110, 247, 0.25);
+  color: var(--indigo-light);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .section-title { font-size: 30px; }
+  .section-subtitle { font-size: 15px; }
+  .grid-3 { grid-template-columns: 1fr 1fr !important; }
+  .grid-5 { grid-template-columns: 1fr 1fr !important; }
+}
+ 
+@media (max-width: 640px) {
+  .section-container { padding: 56px 20px; }
+  .section-title      { font-size: 26px; }
+  .grid-3             { grid-template-columns: 1fr !important; }
+  .grid-4             { grid-template-columns: 1fr 1fr !important; }
+  .grid-5             { grid-template-columns: 1fr !important; }
+  .hide-mobile        { display: none !important; }
+}
