@@ -3,6 +3,9 @@ import db from "./src/config/db.js";
 import studentRoutes from "./src/routes/studentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import jobRoutes from "./src/routes/jobRoutes.js";
+
+
 
 const app = express();
 const PORT = process.env.PORT;
@@ -11,6 +14,7 @@ app.use(express.json());
 app.use("/students", studentRoutes);
 app.use("/users",userRoutes);
 app.use("/auth", authRoutes);
+app.use("/api/jobs", jobRoutes);
 
 app.get("/", (req, res) => {
   res.send("Placement Management Portal API");

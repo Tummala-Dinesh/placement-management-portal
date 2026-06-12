@@ -1,0 +1,21 @@
+CREATE TYPE branch_type AS ENUM (
+    'CSE',
+    'IT',
+    'ECE',
+    'EEE',
+    'MECH',
+    'CIVIL'
+);
+CREATE TABLE jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_name VARCHAR(255) NOT NULL,
+    role_title VARCHAR(255) NOT NULL,
+    min_cgpa DECIMAL(3,2),
+    max_backlogs INT DEFAULT 0,
+    allowed_branches branch_type[],
+    ctc DECIMAL(10,2),
+    job_description TEXT,
+    deadline DATE NOT NULL,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
