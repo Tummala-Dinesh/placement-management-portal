@@ -9,6 +9,7 @@ import {
 
 import { verifyToken } from "../middleware/authMiddleware.js";
 import authorizeRoles from "../middleware/roleMiddleware.js";
+import { checkEligibility } from "../controllers/jobController.js";
 
 const router = express.Router();
 
@@ -43,6 +44,13 @@ router.delete(
   verifyToken,
   authorizeRoles("admin"),
   deleteJob
+);
+
+router.get(
+  "/:id/eligibility",
+  verifyToken,
+  authorizeRoles("student"),
+  checkEligibility
 );
 
 export default router;

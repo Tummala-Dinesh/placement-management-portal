@@ -174,3 +174,82 @@ export const deleteJob = async (req, res) => {
     });
   }
 };
+
+export const checkEligibility = async (req, res) => {
+  try {
+    const { id: jobId } = req.params;
+    const userId = req.user.id;
+
+    // Get student profile
+    const studentResult = await db.query(
+      `SELECT cgpa, backlogs, branch
+       FROM student_profiles
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (studentResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Student profile not found"
+      });
+    }
+
+    // Get job
+    const jobResult = await db.query(
+      `SELECT *
+       FROM jobs
+       WHERE id = $1`,
+      [jobId]
+    );
+
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Job not found"
+      });
+    }
+
+    const student = studentResult.rows[0];
+    const job = jobResult.rows[0];
+
+    const reasons = [];
+
+    if (student.cgpa < job.min_cgpa) {
+      reasons.push(
+        `Minimum CGPA required is ${job.min_cgpa}`
+      );
+    }
+
+    if (student.backlogs > job.max_backlogs) {
+      reasons.push(
+        `Maximum allowed backlogs is ${job.max_backlogs}`
+      );
+    }
+
+    if (
+      !job.allowed_branches.includes(student.branch)
+    ) {
+      reasons.push(
+        `${student.branch} branch is not eligible`
+      );
+    }
+
+    if (reasons.length > 0) {
+      return res.status(200).json({
+        eligible: false,
+        reasons
+      });
+    }
+
+    return res.status(200).json({
+      eligible: true,
+      apply_link: job.apply_link
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Eligibility check failed"
+    });
+  }
+};

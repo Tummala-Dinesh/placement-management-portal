@@ -19,3 +19,5 @@ CREATE TABLE jobs (
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE jobs
+ADD COLUMN apply_link TEXT;
