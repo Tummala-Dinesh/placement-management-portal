@@ -1,17 +1,23 @@
 import express from "express";
 import {
+  getEligibleJobs,
   createJob,
   getJobs,
   getJobById,
   updateJob,
-  deleteJob
 } from "../controllers/jobController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
 import authorizeRoles from "../middleware/roleMiddleware.js";
-import { checkEligibility } from "../controllers/jobController.js";
 
 const router = express.Router();
+
+router.get(
+  "/eligible",
+  verifyToken,
+  authorizeRoles("student"),
+  getEligibleJobs
+);
 
 router.post(
   "/",
@@ -23,6 +29,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
+  authorizeRoles("admin"),
   getJobs
 );
 
@@ -39,18 +46,6 @@ router.put(
   updateJob
 );
 
-router.delete(
-  "/:id",
-  verifyToken,
-  authorizeRoles("admin"),
-  deleteJob
-);
 
-router.get(
-  "/:id/eligibility",
-  verifyToken,
-  authorizeRoles("student"),
-  checkEligibility
-);
 
 export default router;

@@ -7,10 +7,10 @@ env.config();
 
 export const register = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password} = req.body;
 
     // Basic validation
-    if (!email || !password || !role) {
+    if (!email || !password ) {
       return res.status(400).json({
         message: "All fields are required",
       });
@@ -35,10 +35,10 @@ export const register = async (req, res) => {
     const result = await db.query(
       `
       INSERT INTO users(email, password_hash, role)
-      VALUES($1, $2, $3)
+      VALUES($1, $2, 'student')
       RETURNING id, email, role
       `,
-      [email, hashedPassword, role]
+      [email, hashedPassword]
     );
 
     res.status(201).json({

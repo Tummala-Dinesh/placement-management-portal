@@ -10,7 +10,8 @@ export const createJob = async (req, res) => {
       allowed_branches,
       ctc,
       job_description,
-      deadline
+      deadline,
+      apply_link
     } = req.body;
 
     const result = await db.query(
@@ -23,9 +24,10 @@ export const createJob = async (req, res) => {
         ctc,
         job_description,
         deadline,
+        apply_link,
         created_by
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       RETURNING *`,
       [
         company_name,
@@ -36,6 +38,7 @@ export const createJob = async (req, res) => {
         ctc,
         job_description,
         deadline,
+        apply_link,
         req.user.id
       ]
     );
@@ -103,7 +106,8 @@ export const updateJob = async (req, res) => {
       allowed_branches,
       ctc,
       job_description,
-      deadline
+      deadline,
+      apply_link
     } = req.body;
 
     const result = await db.query(
@@ -116,8 +120,9 @@ export const updateJob = async (req, res) => {
         allowed_branches=$5,
         ctc=$6,
         job_description=$7,
-        deadline=$8
-       WHERE id=$9
+        deadline=$8,
+        apply_link=$9,
+       WHERE id=$10
        RETURNING *`,
       [
         company_name,
@@ -128,6 +133,7 @@ export const updateJob = async (req, res) => {
         ctc,
         job_description,
         deadline,
+        apply_link,
         id
       ]
     );
@@ -148,36 +154,8 @@ export const updateJob = async (req, res) => {
   }
 };
 
-export const deleteJob = async (req, res) => {
+export const getEligibleJobs = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const result = await db.query(
-      "DELETE FROM jobs WHERE id=$1 RETURNING *",
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Job not found"
-      });
-    }
-
-    res.status(200).json({
-      message: "Job deleted successfully"
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      message: "Failed to delete job"
-    });
-  }
-};
-
-export const checkEligibility = async (req, res) => {
-  try {
-    const { id: jobId } = req.params;
     const userId = req.user.id;
 
     // Get student profile
@@ -194,62 +172,32 @@ export const checkEligibility = async (req, res) => {
       });
     }
 
-    // Get job
-    const jobResult = await db.query(
+    const student = studentResult.rows[0];
+
+    // Fetch only eligible jobs
+    const jobsResult = await db.query(
       `SELECT *
        FROM jobs
-       WHERE id = $1`,
-      [jobId]
+       WHERE
+         min_cgpa <= $1
+         AND max_backlogs >= $2
+         AND $3 = ANY(allowed_branches)
+         AND deadline >= CURRENT_DATE
+       ORDER BY deadline ASC`,
+      [
+        student.cgpa,
+        student.backlogs,
+        student.branch
+      ]
     );
 
-    if (jobResult.rows.length === 0) {
-      return res.status(404).json({
-        message: "Job not found"
-      });
-    }
+    res.status(200).json(jobsResult.rows);
 
-    const student = studentResult.rows[0];
-    const job = jobResult.rows[0];
-
-    const reasons = [];
-
-    if (student.cgpa < job.min_cgpa) {
-      reasons.push(
-        `Minimum CGPA required is ${job.min_cgpa}`
-      );
-    }
-
-    if (student.backlogs > job.max_backlogs) {
-      reasons.push(
-        `Maximum allowed backlogs is ${job.max_backlogs}`
-      );
-    }
-
-    if (
-      !job.allowed_branches.includes(student.branch)
-    ) {
-      reasons.push(
-        `${student.branch} branch is not eligible`
-      );
-    }
-
-    if (reasons.length > 0) {
-      return res.status(200).json({
-        eligible: false,
-        reasons
-      });
-    }
-
-    return res.status(200).json({
-      eligible: true,
-      apply_link: job.apply_link
-    });
-
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
     res.status(500).json({
-      message: "Eligibility check failed"
+      message: "Failed to fetch eligible jobs"
     });
   }
 };

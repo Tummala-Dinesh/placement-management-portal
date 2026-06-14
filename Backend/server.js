@@ -4,6 +4,8 @@ import studentRoutes from "./src/routes/studentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import jobRoutes from "./src/routes/jobRoutes.js";
+import placementRoutes from "./src/routes/placementRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 
 
 
@@ -14,7 +16,9 @@ app.use(express.json());
 app.use("/students", studentRoutes);
 app.use("/users",userRoutes);
 app.use("/auth", authRoutes);
-app.use("/api/jobs", jobRoutes);
+app.use("/jobs", jobRoutes);
+app.use("placement",placementRoutes);
+app.use("/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Placement Management Portal API");
