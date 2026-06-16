@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import './index.css';
 
 function App() {
@@ -8,8 +10,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<div style={{ textAlign: 'center', padding: '5rem', fontSize: '1.5rem' }}>Student Login Page Coming Soon</div>} />
-        <Route path="/register" element={<div style={{ textAlign: 'center', padding: '5rem', fontSize: '1.5rem' }}>Student Registration Page Coming Soon</div>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );
