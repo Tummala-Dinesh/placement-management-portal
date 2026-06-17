@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -13,20 +14,24 @@ const Login = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear the error message if the user starts typing again
     if (error) setError('');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // TODO: Replace this with your actual backend check.
+    
     // --- MOCK LOGIC ---
-    // Simulating that only 'test@student.nitw.ac.in' is a registered user right now.
+    // Simulating that only 'test@student.nitw.ac.in' is registered for testing the UI
     const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
 
     if (!isUserRegisteredInDatabase) {
       setError("User is not registered. Please register first.");
     } else {
-      alert("Login successful! Dashboard coming soon.");
+      // Push the user directly to the dashboard upon successful login
+      navigate('/dashboard'); 
     }
   };
 
@@ -41,6 +46,7 @@ const Login = () => {
             <p>Log in to access your placement dashboard.</p>
           </div>
 
+          {/* Conditional Error Rendering */}
           {error && (
             <div className="error-message">
               {error}

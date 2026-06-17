@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import SetupProfile from './pages/SetupProfile';
+import StudentDashboard from './pages/StudentDashboard';
 import './index.css';
 
 function App() {
@@ -12,6 +14,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/setup-profile" element={<SetupProfile />} /> 
+        <Route path="/dashboard" element={<StudentDashboard />} />
       </Routes>
     </Router>
   );
