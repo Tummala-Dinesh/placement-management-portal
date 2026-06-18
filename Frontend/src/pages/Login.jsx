@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
+import api from "../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,21 +19,28 @@ const Login = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const response = await api.post("/auth/login", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        console.log(response.data);
+        localStorage.setItem("token", response.data.token);
+        navigate('/dashboard'); 
+
+      } catch (error) {
+        console.error(error);
+      }
     
     // TODO: Replace this with your actual backend check.
     
     // --- MOCK LOGIC ---
     // Simulating that only 'test@student.nitw.ac.in' is registered for testing the UI
-    const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
-
-    if (!isUserRegisteredInDatabase) {
-      setError("User is not registered. Please register first.");
-    } else {
-      // Push the user directly to the dashboard upon successful login
-      navigate('/dashboard'); 
-    }
+    //const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
+    
   };
 
   return (
@@ -60,7 +68,8 @@ const Login = () => {
                 type="email" 
                 id="email" 
                 name="email" 
-                className="form-input" 
+                className="form-input"
+                value={formData.email} 
                 placeholder="username@student.nitw.ac.in" 
                 required 
                 onChange={handleChange} 
@@ -74,6 +83,7 @@ const Login = () => {
                 id="password" 
                 name="password" 
                 className="form-input" 
+                value={formData.password}
                 placeholder="••••••••" 
                 required 
                 onChange={handleChange} 

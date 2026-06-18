@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
+import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -10,23 +11,35 @@ const Register = () => {
     password: ''
   });
 
-  const handleChange = (e) => {
+  const handleChange =  (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const response = await api.post("/auth/register", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        console.log(response.data);
+        localStorage.setItem("token", response.data.token);
+        navigate('/setup-profile');
+
+      } catch (error) {
+        console.error(error);
+      }
     
     // Ensure the student is using the official college email
-    if (!formData.email.endsWith('@student.nitw.ac.in')) {
-      alert("Please use your official @student.nitw.ac.in email address.");
-      return;
-    }
+    //if (!formData.email.endsWith('@student.nitw.ac.in')) {
+    //  alert("Please use your official @student.nitw.ac.in email address.");
+    //  return;
+    //}
 
     // TODO: Connect your backend axios POST request here
     
     // After successful account creation, push them to the profile completion form
-    navigate('/setup-profile');
   };
 
   return (
@@ -48,6 +61,7 @@ const Register = () => {
                 id="email" 
                 name="email" 
                 className="form-input" 
+                value={formData.email}
                 placeholder="username@student.nitw.ac.in" 
                 required 
                 onChange={handleChange} 
@@ -61,6 +75,7 @@ const Register = () => {
                 id="password" 
                 name="password" 
                 className="form-input" 
+                value={formData.password}
                 placeholder="••••••••" 
                 required 
                 onChange={handleChange} 

@@ -7,7 +7,8 @@ export const createProfile = async (req, res) => {
       branch,
       cgpa,
       backlogs,
-      skills,
+      resume_url,
+      skills
     } = req.body;
 
     const userId = req.user.id;
@@ -21,10 +22,11 @@ export const createProfile = async (req, res) => {
         branch,
         cgpa,
         backlogs,
+        resume_url,
         skills
       )
       VALUES
-      ($1,$2,$3,$4,$5,$6)
+      ($1,$2,$3,$4,$5,$6,$7)
       RETURNING *
       `,
       [
@@ -33,6 +35,7 @@ export const createProfile = async (req, res) => {
         branch,
         cgpa,
         backlogs,
+        resume_url,
         skills,
       ]
     );
@@ -83,6 +86,7 @@ export const updateProfile = async (req, res) => {
       branch,
       cgpa,
       backlogs,
+      resume_url,
       skills,
     } = req.body;
 
@@ -94,8 +98,9 @@ export const updateProfile = async (req, res) => {
         branch = $2,
         cgpa = $3,
         backlogs = $4,
-        skills = $5
-      WHERE user_id = $6
+        resume_url=$5,
+        skills = $6
+      WHERE user_id = $7
       RETURNING *
       `,
       [
@@ -103,6 +108,7 @@ export const updateProfile = async (req, res) => {
         branch,
         cgpa,
         backlogs,
+        resume_url,
         skills,
         req.user.id,
       ]
