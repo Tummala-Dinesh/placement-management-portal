@@ -26,7 +26,7 @@ const StudentDashboard = () => {
 
   const handleLogout = () => {
     // TODO: Clear JWT token from localStorage here
-    // localStorage.removeItem('token');
+    //localStorage.removeItem('token');
     navigate('/login');
   };
 
