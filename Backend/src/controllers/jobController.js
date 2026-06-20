@@ -191,6 +191,11 @@ export const getEligibleJobs = async (req, res) => {
       ]
     );
 
+   jobsResult.rows.forEach(job => {
+        job.allowed_branches = job.allowed_branches
+            ? job.allowed_branches.replace(/[{}]/g, '').split(',')
+            : [];
+    });
     res.status(200).json(jobsResult.rows);
 
   } catch (error) {

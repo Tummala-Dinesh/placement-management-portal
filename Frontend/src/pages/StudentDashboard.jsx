@@ -1,38 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, LogOut, Briefcase, User } from 'lucide-react';
-import '../styles/Navbar.css'; // For the navbar styles
+import { GraduationCap, LogOut, Briefcase, User, Edit2, Save, X, ExternalLink } from 'lucide-react';
+import '../styles/Navbar.css'; 
 import '../styles/Dashboard.css';
+import api from "../services/api";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
   const [activeTab, setActiveTab] = useState('jobs');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
-  // MOCK DATA: Later, fetch this from backend using your JWT
-  const studentProfile = {
-    fullName: "Alex Carter",
-    email: "alex@student.nitw.ac.in",
-    branch: "Computer Science (CSE)",
-    cgpa: "8.8",
-    backlogs: "0",
-    skills: "React, Node.js, PostgreSQL"
+  
+  const [profileData, setProfileData] = useState({
+    full_name: '',
+    email: '',
+    branch: '',
+    cgpa: '',
+    resume_url:'',
+    backlogs: '',
+    skills: ''
+  });
+
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get("/students/profile",
+        {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+        }
+      );
+
+      setProfileData({
+        full_name: response.data.full_name,
+        branch: response.data.branch,
+        cgpa: response.data.cgpa,
+        backlogs: response.data.backlogs,
+        resume_url : response.data.resume_url,
+        skills: Array.isArray(response.data.skills)
+            ? response.data.skills.join(", ")
+            : response.data.skills || ""
+      });
+
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  const eligibleJobs = [
-    { id: 1, company: "Google", role: "Software Engineer Intern", ctc: "1.2 Lakhs/month", cutoff: "8.0 CGPA" },
-    { id: 2, company: "Microsoft", role: "SDE 1", ctc: "45 LPA", cutoff: "8.5 CGPA" },
-    { id: 3, company: "Amazon", role: "Frontend Developer", ctc: "30 LPA", cutoff: "7.5 CGPA" }
-  ];
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  // Mock data perfectly matching your PostgreSQL database schema
+  const [eligibleJobs, setEligibleJobs] = useState([]);
+
+  const fetchEligibleJobs = async () => {
+    try {
+      const response = await api.get("/jobs/eligible",
+        {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+      setEligibleJobs(response.data);
+    }
+    catch(err){
+      console.log(err);
+    }
+  };
 
   const handleLogout = () => {
     // TODO: Clear JWT token from localStorage here
-    //localStorage.removeItem('token');
+    localStorage.clear();
     navigate('/login');
   };
 
+  const handleProfileChange = (e) => {
+    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+  };
+
+  const handleProfileSave = async (e) => {
+    // TODO: Connect to backend PUT request here
+      e.preventDefault();
+  const token = localStorage.getItem("token");
+    try{
+      const response = await api.put(
+          "/students/profile",
+          {
+            full_name: profileData.full_name,
+            branch: profileData.branch,
+            cgpa: profileData.cgpa,
+            backlogs: profileData.backlogs,
+            resume_url: profileData.resume_url,
+            skills: profileData.skills
+            ? profileData.skills.split(",").map(skill => skill.trim())
+            : []
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+      console.log(response.data);
+      setIsEditingProfile(false);
+      alert("Profile updated successfully!");
+        useEffect(() => {
+        fetchProfile();
+        fetchEligibleJobs();
+    }, []);
+    }
+    catch (error) {
+        console.error(error);
+    }
+    
+  };
+
+    useEffect(() => {
+        fetchProfile();
+        fetchEligibleJobs();
+    }, []);
+
+    
   return (
     <div className="dashboard-page">
-      {/* Student Specific Navbar */}
       <nav className="navbar">
         <div className="nav-logo">
           <GraduationCap size={32} />
@@ -47,11 +140,12 @@ const StudentDashboard = () => {
 
       <div className="dashboard-content">
         <div className="dashboard-header">
-          <h1>Welcome, {studentProfile.fullName.split(' ')[0]}</h1>
+          <h1>
+          Welcome, {profileData.full_name?.split(' ')[0]}
+          </h1>
           <p>Here are your placement updates and eligible drives.</p>
         </div>
 
-        {/* Custom Tabs */}
         <div className="dashboard-tabs">
           <button className={`tab-btn ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => setActiveTab('jobs')}>
             <Briefcase size={20} /> Eligible Jobs
@@ -61,52 +155,212 @@ const StudentDashboard = () => {
           </button>
         </div>
 
-        {/* Tab Content Rendering */}
-        {activeTab === 'jobs' && (
-          <div className="jobs-grid">
-            {eligibleJobs.map(job => (
-              <div key={job.id} className="job-card">
-                <div className="job-company">{job.company}</div>
-                <h3 className="job-title">{job.role}</h3>
-                <div className="job-details">
-                  <span><strong>Package:</strong> {job.ctc}</span>
-                  <span><strong>Eligibility Cutoff:</strong> {job.cutoff}</span>
-                </div>
-                <button className="btn-apply">Apply Now</button>
-              </div>
-            ))}
+      {activeTab === 'jobs' && (
+  <div className="jobs-grid">
+
+    {eligibleJobs.length === 0 ? (
+      <p>No eligible jobs found.</p>
+    ) : (
+      eligibleJobs.map((job, index) => (
+        <div
+          key={index}
+          className="job-card"
+          style={{ display: 'flex', flexDirection: 'column' }}
+        >
+
+          <div className="job-company">
+            {job.company_name}
           </div>
-        )}
+
+          <h3
+            className="job-title"
+            style={{ marginBottom: '0.5rem' }}
+          >
+            {job.role_title}
+          </h3>
+
+          <p
+            style={{
+              color: '#64748b',
+              fontSize: '0.9rem',
+              marginBottom: '1.5rem',
+              lineHeight: '1.5',
+              flexGrow: 1
+            }}
+          >
+            {job.job_description}
+          </p>
+
+          <div
+            className="job-details"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.75rem',
+              marginBottom: '2rem',
+              fontSize: '0.9rem'
+            }}
+          >
+
+            <span>
+              <strong style={{ color: '#334155' }}>
+                CTC:
+              </strong>
+              {' '}
+              {job.ctc} LPA
+            </span>
+
+            <span>
+              <strong style={{ color: '#334155' }}>
+                Deadline:
+              </strong>
+              {' '}
+              {job.deadline}
+            </span>
+
+            <span>
+              <strong style={{ color: '#334155' }}>
+                Min CGPA:
+              </strong>
+              {' '}
+              {job.min_cgpa}
+            </span>
+
+            <span>
+              <strong style={{ color: '#334155' }}>
+                Backlogs:
+              </strong>
+              {' '}
+              {job.max_backlogs} Max
+            </span>
+
+            <span style={{ gridColumn: 'span 2' }}>
+              <strong style={{ color: '#334155' }}>
+                Branches:
+              </strong>
+              {' '}
+              {job.allowed_branches.join(', ')}
+            </span>
+
+          </div>
+
+          <button
+            className="btn-apply"
+            onClick={() => window.open(job.apply_link, '_blank')}
+            disabled={!job.apply_link}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '0.5rem',
+              opacity: !job.apply_link ? 0.5 : 1,
+              cursor: !job.apply_link
+                ? 'not-allowed'
+                : 'pointer'
+            }}
+          >
+
+            {job.apply_link ? (
+              <>
+                Apply Now <ExternalLink size={16} />
+              </>
+            ) : (
+              "Link Unavailable"
+            )}
+
+          </button>
+
+        </div>
+      ))
+    )}
+
+  </div>
+)}
 
         {activeTab === 'profile' && (
           <div className="profile-view">
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>Academic Details</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.75rem', margin: 0 }}>Academic Details</h2>
+              
+              {!isEditingProfile ? (
+                <button onClick={() => setIsEditingProfile(true)} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                  <Edit2 size={16} /> Edit Profile
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button onClick={() => setIsEditingProfile(false)} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem', borderColor: '#ef4444', color: '#ef4444' }}>
+                    <X size={16} /> Cancel
+                  </button>
+                  <button onClick={handleProfileSave} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    <Save size={16} /> Save Changes
+                  </button>
+                </div>
+              )}
+            </div>
+            
             <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
             
             <div className="profile-data-grid">
               <div className="data-group">
                 <label>Full Name</label>
-                <p>{studentProfile.fullName}</p>
+                {isEditingProfile ? (
+                  <input type="text" name="full_name" value={profileData.full_name} onChange={handleProfileChange} className="form-input" style={{ width: '100%', padding: '0.5rem' }} />
+                ) : (
+                  <p>{profileData.full_name}</p>
+                )}
               </div>
+              {/* 
               <div className="data-group">
                 <label>College Email</label>
-                <p>{studentProfile.email}</p>
-              </div>
+                {isEditingProfile ? (
+                  <input type="email" name="email" value={profileData.email} disabled className="form-input" style={{ width: '100%', padding: '0.5rem', backgroundColor: '#e2e8f0', cursor: 'not-allowed' }} />
+                ) : (
+                  <p>{profileData.email}</p>
+                )}
+              </div> */}
+              
+
               <div className="data-group">
                 <label>Branch</label>
-                <p>{studentProfile.branch}</p>
+                {isEditingProfile ? (
+                  <select name="branch" value={profileData.branch} onChange={handleProfileChange} className="form-input" style={{ width: '100%', padding: '0.5rem' }}>
+                    <option value="CSE">CSE</option>
+                    <option value="IT">IT</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="MECH">MECH</option>
+                    <option value="CIVIL">CIVIL</option>
+                  </select>
+                ) : (
+                  <p>{profileData.branch}</p>
+                )}
               </div>
+
               <div className="data-group">
                 <label>Current CGPA</label>
-                <p>{studentProfile.cgpa}</p>
+                {isEditingProfile ? (
+                  <input type="number" name="cgpa" value={profileData.cgpa} onChange={handleProfileChange} step="0.01" min="0" max="10" className="form-input" style={{ width: '100%', padding: '0.5rem' }} />
+                ) : (
+                  <p>{profileData.cgpa}</p>
+                )}
               </div>
+
               <div className="data-group">
                 <label>Active Backlogs</label>
-                <p>{studentProfile.backlogs}</p>
+                {isEditingProfile ? (
+                  <input type="number" name="backlogs" value={profileData.backlogs} onChange={handleProfileChange} min="0" className="form-input" style={{ width: '100%', padding: '0.5rem' }} />
+                ) : (
+                  <p>{profileData.backlogs}</p>
+                )}
               </div>
+
               <div className="data-group">
                 <label>Top Skills</label>
-                <p>{studentProfile.skills}</p>
+                {isEditingProfile ? (
+                  <input type="text" name="skills" value={profileData.skills} onChange={handleProfileChange} className="form-input" style={{ width: '100%', padding: '0.5rem' }} />
+                ) : (
+                  <p>{profileData.skills}</p>
+                )}
               </div>
             </div>
           </div>
