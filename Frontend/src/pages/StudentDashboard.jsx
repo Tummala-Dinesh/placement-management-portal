@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, LogOut, Briefcase, User, Edit2, Save, X, ExternalLink } from 'lucide-react';
 import '../styles/Navbar.css'; 
@@ -11,7 +11,6 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('jobs');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
-  
   const [profileData, setProfileData] = useState({
     full_name: '',
     email: '',
@@ -48,11 +47,6 @@ const StudentDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  // Mock data perfectly matching your PostgreSQL database schema
   const [eligibleJobs, setEligibleJobs] = useState([]);
 
   const fetchEligibleJobs = async () => {
@@ -72,7 +66,6 @@ const StudentDashboard = () => {
   };
 
   const handleLogout = () => {
-    // TODO: Clear JWT token from localStorage here
     localStorage.clear();
     navigate('/login');
   };
@@ -82,10 +75,9 @@ const StudentDashboard = () => {
   };
 
   const handleProfileSave = async (e) => {
-    // TODO: Connect to backend PUT request here
-      e.preventDefault();
-  const token = localStorage.getItem("token");
-    try{
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    try {
       const response = await api.put(
           "/students/profile",
           {
@@ -107,23 +99,40 @@ const StudentDashboard = () => {
       console.log(response.data);
       setIsEditingProfile(false);
       alert("Profile updated successfully!");
-        useEffect(() => {
-        fetchProfile();
-        fetchEligibleJobs();
-    }, []);
+      fetchProfile();
+      fetchEligibleJobs();
     }
     catch (error) {
         console.error(error);
     }
-    
   };
 
-    useEffect(() => {
-        fetchProfile();
-        fetchEligibleJobs();
-    }, []);
+  useEffect(() => {
+      fetchProfile();
+      fetchEligibleJobs();
+  }, []);
 
-    
+  // FILTERING LOGIC: Only show jobs the student is actually eligible for
+  const filteredJobs = useMemo(() => {
+    const studentCgpa = parseFloat(profileData.cgpa) || 0;
+    const studentBacklogs = parseInt(profileData.backlogs, 10) || 0;
+    const studentBranchCode = profileData.branch;
+
+    return eligibleJobs.filter(job => {
+      const jobMinCgpa = parseFloat(job.min_cgpa);
+      const jobMaxBacklogs = parseInt(job.max_backlogs, 10);
+      
+      const meetsCgpa = studentCgpa >= jobMinCgpa;
+      const meetsBacklogs = studentBacklogs <= jobMaxBacklogs;
+      
+      // Safety check in case the database returns null for branches
+      const branchesArray = Array.isArray(job.allowed_branches) ? job.allowed_branches : [];
+      const meetsBranch = branchesArray.includes(studentBranchCode);
+
+      return meetsCgpa && meetsBacklogs && meetsBranch;
+    });
+  }, [profileData, eligibleJobs]);
+
   return (
     <div className="dashboard-page">
       <nav className="navbar">
@@ -155,127 +164,97 @@ const StudentDashboard = () => {
           </button>
         </div>
 
-      {activeTab === 'jobs' && (
-  <div className="jobs-grid">
-
-    {eligibleJobs.length === 0 ? (
-      <p>No eligible jobs found.</p>
-    ) : (
-      eligibleJobs.map((job, index) => (
-        <div
-          key={index}
-          className="job-card"
-          style={{ display: 'flex', flexDirection: 'column' }}
-        >
-
-          <div className="job-company">
-            {job.company_name}
-          </div>
-
-          <h3
-            className="job-title"
-            style={{ marginBottom: '0.5rem' }}
-          >
-            {job.role_title}
-          </h3>
-
-          <p
-            style={{
-              color: '#64748b',
-              fontSize: '0.9rem',
-              marginBottom: '1.5rem',
-              lineHeight: '1.5',
-              flexGrow: 1
-            }}
-          >
-            {job.job_description}
-          </p>
-
-          <div
-            className="job-details"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '0.75rem',
-              marginBottom: '2rem',
-              fontSize: '0.9rem'
-            }}
-          >
-
-            <span>
-              <strong style={{ color: '#334155' }}>
-                CTC:
-              </strong>
-              {' '}
-              {job.ctc} LPA
-            </span>
-
-            <span>
-              <strong style={{ color: '#334155' }}>
-                Deadline:
-              </strong>
-              {' '}
-              {job.deadline}
-            </span>
-
-            <span>
-              <strong style={{ color: '#334155' }}>
-                Min CGPA:
-              </strong>
-              {' '}
-              {job.min_cgpa}
-            </span>
-
-            <span>
-              <strong style={{ color: '#334155' }}>
-                Backlogs:
-              </strong>
-              {' '}
-              {job.max_backlogs} Max
-            </span>
-
-            <span style={{ gridColumn: 'span 2' }}>
-              <strong style={{ color: '#334155' }}>
-                Branches:
-              </strong>
-              {' '}
-              {job.allowed_branches.join(', ')}
-            </span>
-
-          </div>
-
-          <button
-            className="btn-apply"
-            onClick={() => window.open(job.apply_link, '_blank')}
-            disabled={!job.apply_link}
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '0.5rem',
-              opacity: !job.apply_link ? 0.5 : 1,
-              cursor: !job.apply_link
-                ? 'not-allowed'
-                : 'pointer'
-            }}
-          >
-
-            {job.apply_link ? (
-              <>
-                Apply Now <ExternalLink size={16} />
-              </>
+        {activeTab === 'jobs' && (
+          <div className="jobs-grid">
+            {filteredJobs.length === 0 ? (
+              <p>No eligible jobs found.</p>
             ) : (
-              "Link Unavailable"
+              filteredJobs.map((job, index) => (
+                <div
+                  key={index}
+                  className="job-card"
+                  style={{ display: 'flex', flexDirection: 'column' }}
+                >
+                  <div className="job-company">
+                    {job.company_name}
+                  </div>
+
+                  <h3
+                    className="job-title"
+                    style={{ marginBottom: '0.5rem' }}
+                  >
+                    {job.role_title}
+                  </h3>
+
+                  <p
+                    style={{
+                      color: '#64748b',
+                      fontSize: '0.9rem',
+                      marginBottom: '1.5rem',
+                      lineHeight: '1.5',
+                      flexGrow: 1
+                    }}
+                  >
+                    {job.job_description}
+                  </p>
+
+                  <div
+                    className="job-details"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '0.75rem',
+                      marginBottom: '2rem',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <span>
+                      <strong style={{ color: '#334155' }}>CTC:</strong>{' '}{job.ctc} LPA
+                    </span>
+
+                    <span>
+                      <strong style={{ color: '#334155' }}>Deadline:</strong>{' '}{job.deadline}
+                    </span>
+
+                    <span>
+                      <strong style={{ color: '#334155' }}>Min CGPA:</strong>{' '}{job.min_cgpa}
+                    </span>
+
+                    <span>
+                      <strong style={{ color: '#334155' }}>Backlogs:</strong>{' '}{job.max_backlogs} Max
+                    </span>
+
+                    <span style={{ gridColumn: 'span 2' }}>
+                      <strong style={{ color: '#334155' }}>Branches:</strong>{' '}{job.allowed_branches?.join(', ')}
+                    </span>
+                  </div>
+
+                  <button
+                    className="btn-apply"
+                    onClick={() => window.open(job.apply_link, '_blank')}
+                    disabled={!job.apply_link}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      opacity: !job.apply_link ? 0.5 : 1,
+                      cursor: !job.apply_link ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {job.apply_link ? (
+                      <>
+                        Apply Now <ExternalLink size={16} />
+                      </>
+                    ) : (
+                      "Link Unavailable"
+                    )}
+                  </button>
+                </div>
+              ))
             )}
-
-          </button>
-
-        </div>
-      ))
-    )}
-
-  </div>
-)}
+          </div>
+        )}
 
         {activeTab === 'profile' && (
           <div className="profile-view">
@@ -309,16 +288,6 @@ const StudentDashboard = () => {
                   <p>{profileData.full_name}</p>
                 )}
               </div>
-              {/* 
-              <div className="data-group">
-                <label>College Email</label>
-                {isEditingProfile ? (
-                  <input type="email" name="email" value={profileData.email} disabled className="form-input" style={{ width: '100%', padding: '0.5rem', backgroundColor: '#e2e8f0', cursor: 'not-allowed' }} />
-                ) : (
-                  <p>{profileData.email}</p>
-                )}
-              </div> */}
-              
 
               <div className="data-group">
                 <label>Branch</label>

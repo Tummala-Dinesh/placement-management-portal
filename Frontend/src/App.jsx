@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SetupProfile from './pages/SetupProfile';
 import StudentDashboard from './pages/StudentDashboard';
-import ProtectedRoute from './Components/ProtectedRoute';
+import AdminDashboard from './pages/AdminDashboard'; // NEW
 import './index.css';
 
 function App() {
@@ -15,22 +15,9 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/setup-profile"
-          element={
-            <ProtectedRoute>
-              <SetupProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <StudentDashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/setup-profile" element={<SetupProfile />} />
+        <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
       </Routes>
     </Router>
   );

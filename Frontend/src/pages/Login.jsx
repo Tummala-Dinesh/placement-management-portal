@@ -19,28 +19,25 @@ const Login = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        const response = await api.post("/auth/login", {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        console.log(response.data);
-        localStorage.setItem("token", response.data.token);
-        navigate('/dashboard'); 
-
-      } catch (error) {
-        console.error(error);
-      }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Check if it's the admin logging in
+    if (formData.email === 'admin@student.nitw.ac.in') {
+      navigate('/admin-dashboard');
+    } 
+    // Example logic for a successful student login
+    else if (formData.email === 'test@student.nitw.ac.in') { 
+      navigate('/dashboard'); 
+    } else {
+      setError("User is not registered. Please register first.");
+    }
     
     // TODO: Replace this with your actual backend check.
     
     // --- MOCK LOGIC ---
     // Simulating that only 'test@student.nitw.ac.in' is registered for testing the UI
     //const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
-    
   };
 
   return (
