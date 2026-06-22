@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, LogOut, LayoutDashboard, Briefcase, Users, Plus, ShieldCheck } from 'lucide-react';
 import '../styles/Navbar.css'; 
 import '../styles/Dashboard.css';
+import api from "../services/api";
 
 const AdminDashboard = () => {
+
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
   const [activeTab, setActiveTab] = useState('overview');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [editingJobId, setEditingJobId] = useState(null);
 
   // Dummy Placement Stats
   const stats = {
@@ -19,32 +23,27 @@ const AdminDashboard = () => {
   };
 
   // Mock Job Data matching DB Schema exactly
-  const [jobs, setJobs] = useState([
-    { 
-      id: "44bfd283-...", 
-      company_name: "Google", 
-      role_title: "Software Engineer", 
-      min_cgpa: "8.00", 
-      max_backlogs: 0, 
-      allowed_branches: "CSE, IT", 
-      ctc: "25.00", 
-      job_description: "Backend and Full Stack Development", 
-      deadline: "2027-07-30", 
-      apply_link: "https://careers.google.com" 
-    },
-    { 
-      id: "ccb2a2e8-...", 
-      company_name: "TCS", 
-      role_title: "Digital Engineer", 
-      min_cgpa: "7.00", 
-      max_backlogs: 1, 
-      allowed_branches: "CSE, IT, ECE, EEE, MECH", 
-      ctc: "7.50", 
-      job_description: "Digital Engineering Role", 
-      deadline: "2027-08-15", 
-      apply_link: "https://nextstep.tcs.com" 
+  const [jobs, setJobs] = useState([]);
+
+  const fetchJobs = async () => {
+    try {
+      const response = await api.get("/jobs",
+        {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+      setJobs(response.data);
     }
-  ]);
+    catch(err){
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+          fetchJobs();
+  }, []);
 
   // Form State mapping to DB columns (excluding id, created_by, created_at)
   const initialJobForm = { 
@@ -61,7 +60,8 @@ const AdminDashboard = () => {
   const [jobForm, setJobForm] = useState(initialJobForm);
 
   const handleLogout = () => {
-    // Clear auth token logic here
+    // Clear auth token logic 
+    localStorage.clear();
     navigate('/login');
   };
 
@@ -69,20 +69,114 @@ const AdminDashboard = () => {
     setJobForm({ ...jobForm, [e.target.name]: e.target.value });
   };
 
-  const handleSaveJob = (e) => {
-    e.preventDefault();
-    // API logic to save/update job goes here
-    alert("Job saved successfully!");
-    setIsFormOpen(false);
-    setJobForm(initialJobForm);
-  };
-
-  const handleDeleteJob = (id) => {
-    if(window.confirm("Are you sure you want to delete this job posting?")) {
-      // API logic to delete job goes here
-      alert(`Job deleted.`);
+    const handleCreateJob = async () => {
+    try {
+        await api.post("/jobs",{
+            ...jobForm,
+            allowed_branches: jobForm.allowed_branches
+                .split(',')
+                .map(b => b.trim())
+        },
+          {
+          headers: {
+              Authorization: `Bearer ${token}`,
+            },
+        } );
     }
-  };
+    catch(err){
+        console.log(err);
+    }
+};
+
+
+    const handleUpdateJob = async () => {
+    try {
+        await api.put(`/jobs/${editingJobId}`
+          ,{
+          ...jobForm,
+            allowed_branches: jobForm.allowed_branches
+                .split(',')
+                .map(b => b.trim())
+          },
+        {
+          headers: {
+              Authorization: `Bearer ${token}`,
+            },
+        });
+
+        alert("Job updated successfully!");
+
+        setIsFormOpen(false);
+        setEditingJobId(null);
+
+        fetchJobs();   // Refresh jobs
+    }
+    catch (err) {
+        console.error(err);
+    }
+};
+
+ const handleSaveJob = async (e) => {
+    e.preventDefault();
+
+    try {
+        if (editingJobId) {
+            await handleUpdateJob();
+        } else {
+            await handleCreateJob();
+        }
+
+        await fetchJobs();
+
+        alert(
+            editingJobId
+                ? "Job updated successfully!"
+                : "Job created successfully!"
+        );
+
+        setIsFormOpen(false);
+        setEditingJobId(null);
+        setJobForm(initialJobForm);
+
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+  const handleDeleteJob = async (id) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this job posting?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await api.delete(`/jobs/${id}`,{
+      headers: {
+              Authorization: `Bearer ${token}`,
+            },
+    });
+
+    console.log(response.data);
+
+    // Remove the deleted job from state
+    setJobs(prevJobs =>
+      prevJobs.filter(job => job.id !== id)
+    );
+
+    alert("Job deleted successfully!");
+  }
+  catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to delete job"
+    );
+  }
+};
+
+
 
   const handleAddAdmin = (e) => {
     e.preventDefault();
@@ -152,7 +246,8 @@ const AdminDashboard = () => {
           <div>
             {!isFormOpen ? (
               <>
-                <button className="btn-primary" onClick={() => setIsFormOpen(true)} style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button className="btn-primary" onClick={() => {setEditingJobId(null);
+    setJobForm(initialJobForm);setIsFormOpen(true);}} style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Plus size={18} /> Post New Job
                 </button>
                 <div className="jobs-grid">
@@ -162,12 +257,30 @@ const AdminDashboard = () => {
                       <h3 className="job-title" style={{ marginBottom: '1rem' }}>{job.role_title}</h3>
                       <div className="job-details" style={{ fontSize: '0.9rem', marginBottom: '1rem', flexGrow: 1 }}>
                         <p><strong>CTC:</strong> {job.ctc} LPA</p>
-                        <p><strong>Deadline:</strong> {job.deadline}</p>
+                        <p>
+                          <strong>Deadline:</strong>{" "}
+                          {new Date(job.deadline).toLocaleDateString()}
+                        </p>
                         <p><strong>Min CGPA:</strong> {job.min_cgpa}</p>
                         <p><strong>Max Backlogs:</strong> {job.max_backlogs}</p>
                       </div>
                       <div className="action-buttons">
-                        <button className="btn-edit" onClick={() => { setJobForm(job); setIsFormOpen(true); }}>Edit</button>
+                        <button
+                            className="btn-edit"
+                            onClick={() => {
+                              setJobForm({
+                                  ...job,
+                                  allowed_branches: Array.isArray(job.allowed_branches)
+                                      ? job.allowed_branches.join(', ')
+                                      : job.allowed_branches.replace(/[{}]/g, '')
+                              });
+
+                              setEditingJobId(job.id);
+                              setIsFormOpen(true);
+}}
+                        >
+                            Edit
+                        </button>
                         <button className="btn-delete" onClick={() => handleDeleteJob(job.id)}>Delete</button>
                       </div>
                     </div>
@@ -178,7 +291,17 @@ const AdminDashboard = () => {
               <div className="profile-view" style={{ maxWidth: '800px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{jobForm.id ? 'Edit Job Posting' : 'Create New Job Posting'}</h2>
-                  <button onClick={() => {setIsFormOpen(false); setJobForm(initialJobForm);}} className="btn-secondary" style={{ padding: '0.5rem 1rem' }}>Cancel</button>
+                  <button
+                    onClick={() => {
+                      setIsFormOpen(false);
+                      setEditingJobId(null);   // <-- Add this
+                      setJobForm(initialJobForm);
+                    }}
+                    className="btn-secondary"
+                    style={{ padding: '0.5rem 1rem' }}
+                  >
+                    Cancel
+                  </button>
                 </div>
                 
                 <form onSubmit={handleSaveJob} className="auth-form">

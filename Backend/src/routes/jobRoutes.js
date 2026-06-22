@@ -5,6 +5,7 @@ import {
   getJobs,
   getJobById,
   updateJob,
+  deleteJob
 } from "../controllers/jobController.js";
 
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -45,6 +46,13 @@ router.put(
   authorizeRoles("admin"),
   updateJob
 );
+
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizeRoles("admin"),
+  deleteJob
+)
 
 
 
