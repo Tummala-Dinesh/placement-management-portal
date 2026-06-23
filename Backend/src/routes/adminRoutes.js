@@ -1,5 +1,5 @@
 import express from "express";
-import { getDashboardStats } from "../controllers/adminController.js";
+import { getDashboardStats , makeAdmin} from "../controllers/adminController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import  authorizeRoles  from "../middleware/roleMiddleware.js";
 
@@ -11,5 +11,11 @@ router.get(
   authorizeRoles("admin"),
   getDashboardStats
 );
+
+router.put(
+  "/make-admin",
+   verifyToken, 
+   authorizeRoles("admin"),
+   makeAdmin);
 
 export default router;

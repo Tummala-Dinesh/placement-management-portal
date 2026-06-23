@@ -15,12 +15,35 @@ const AdminDashboard = () => {
   const [editingJobId, setEditingJobId] = useState(null);
 
   // Dummy Placement Stats
-  const stats = {
-    totalStudents: 1250,
-    eligibleStudents: 850,
-    activeJobs: 14,
-    offersExtended: 320
-  };
+  
+
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    placedStudents: 0,
+    unplacedStudents: 0,
+    placementRate: 0,
+    highestPackage: 0,
+    averagePackage: 0,
+    topRecruiters: []
+  });
+
+const fetchStats = async () => {
+  try {
+    const response = await api.get(
+      "/admin/dashboard",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setStats(response.data);
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   // Mock Job Data matching DB Schema exactly
   const [jobs, setJobs] = useState([]);
@@ -42,6 +65,7 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+         fetchStats();
           fetchJobs();
   }, []);
 
@@ -176,18 +200,34 @@ const AdminDashboard = () => {
   }
 };
 
+ const handleAddAdmin = async (e) => {
+  e.preventDefault();
 
+  try {
+    const response = await api.put(
+      "/admin/make-admin",
+      {
+        email: newAdminEmail,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const handleAddAdmin = (e) => {
-    e.preventDefault();
-    if (!newAdminEmail.endsWith('@student.nitw.ac.in')) {
-      alert("Admin privileges can only be granted to official college email addresses.");
-      return;
-    }
-    // API logic to grant admin rights goes here
-    alert(`${newAdminEmail} has been granted Admin rights!`);
+    alert(response.data.message);
     setNewAdminEmail('');
-  };
+
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err.response?.data?.message ||
+      "Something went wrong."
+    );
+  }
+};
 
   return (
     <div className="dashboard-page">
@@ -228,16 +268,24 @@ const AdminDashboard = () => {
               <span className="stat-value">{stats.totalStudents}</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Eligible for Placements</span>
-              <span className="stat-value">{stats.eligibleStudents}</span>
+              <span className="stat-label">Placed Students</span>
+              <span className="stat-value">{stats.placedStudents}</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Active Job Postings</span>
-              <span className="stat-value">{stats.activeJobs}</span>
+              <span className="stat-label">UnPlaced Students</span>
+              <span className="stat-value">{stats.unplacedStudents}</span>
             </div>
             <div className="stat-card">
-              <span className="stat-label">Offers Extended</span>
-              <span className="stat-value" style={{ color: '#16a34a' }}>{stats.offersExtended}</span>
+              <span className="stat-label">PlacementRate</span>
+              <span className="stat-value" style={{ color: '#16a34a' }}>{stats.placementRate} %</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Highest Package</span>
+              <span className="stat-value">{stats.highestPackage}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Average Package</span>
+              <span className="stat-value">{stats.averagePackage}</span>
             </div>
           </div>
         )}

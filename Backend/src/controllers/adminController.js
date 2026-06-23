@@ -5,8 +5,7 @@ export const getDashboardStats = async (req, res) => {
 
     const totalStudentsResult = await db.query(
       `SELECT COUNT(*) AS count
-       FROM users
-       WHERE role = 'student'`
+       FROM student_profiles`
     );
 
     const placedStudentsResult = await db.query(
@@ -68,6 +67,37 @@ export const getDashboardStats = async (req, res) => {
 
     res.status(500).json({
       message: "Failed to fetch dashboard statistics"
+    });
+  }
+};
+
+export const makeAdmin = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE users
+       SET role = 'admin'
+       WHERE email = $1
+       RETURNING id, email, role`,
+      [email]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      message: `${email} is now an admin`,
+      user: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Server error"
     });
   }
 };
