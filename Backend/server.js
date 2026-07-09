@@ -23,7 +23,7 @@ app.use("/students", studentRoutes);
 app.use("/users",userRoutes);
 app.use("/auth", authRoutes);
 app.use("/jobs", jobRoutes);
-app.use("placement",placementRoutes);
+app.use("/placement",placementRoutes);
 app.use("/admin", adminRoutes);
 
 app.get("/", (req, res) => {
