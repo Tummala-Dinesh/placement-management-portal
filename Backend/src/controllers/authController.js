@@ -7,16 +7,14 @@ env.config();
 
 export const register = async (req, res) => {
   try {
-    const { email, password} = req.body;
+    const { email, password } = req.body;
 
-    // Basic validation
-    if (!email || !password ) {
+    if (!email || !password) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
-    // Check existing user
     const existingUser = await db.query(
       "SELECT * FROM users WHERE email = $1",
       [email]
@@ -28,10 +26,8 @@ export const register = async (req, res) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user
     const result = await db.query(
       `
       INSERT INTO users(email, password_hash, role)
@@ -41,14 +37,29 @@ export const register = async (req, res) => {
       [email, hashedPassword]
     );
 
-    res.status(201).json({
+    const user = result.rows[0];
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    return res.status(201).json({
       message: "User registered successfully",
-      user: result.rows[0],
+      user,
+      token,
     });
+
   } catch (err) {
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Registration failed",
     });
   }
