@@ -1,45 +1,38 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
-import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Catch any errors passed back from the VerifyEmail page
+  const errorMessage = location.state?.error;
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
-  const handleChange =  (e) => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        const response = await api.post("/auth/register", {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        console.log(response.data);
-        localStorage.setItem("token", response.data.token);
-        navigate('/setup-profile');
-
-      } catch (error) {
-        console.error(error);
-      }
+    e.preventDefault();
     
     // Ensure the student is using the official college email
-    //if (!formData.email.endsWith('@student.nitw.ac.in')) {
-    //  alert("Please use your official @student.nitw.ac.in email address.");
-    //  return;
-    //}
+    if (!formData.email.endsWith('@student.nitw.ac.in')) {
+      alert("Please use your official @student.nitw.ac.in email address.");
+      return;
+    }
 
-    // TODO: Connect your backend axios POST request here
+    // TODO: Connect your backend API to trigger the OTP email here
+    // Example: await api.post('/auth/register', formData);
     
-    // After successful account creation, push them to the profile completion form
+    // Navigate to the verification page AND pass the email address along in the state
+    navigate('/verify-email', { state: { email: formData.email } });
   };
 
   return (
@@ -53,6 +46,13 @@ const Register = () => {
             <p>Create your account using your NITW email.</p>
           </div>
 
+          {/* Display verification failure errors here */}
+          {errorMessage && (
+            <div className="error-message" style={{ color: '#ef4444', backgroundColor: '#fef2f2', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', border: '1px solid #fecaca', fontSize: '0.9rem', textAlign: 'center' }}>
+              {errorMessage}
+            </div>
+          )}
+
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">College Email</label>
@@ -61,7 +61,6 @@ const Register = () => {
                 id="email" 
                 name="email" 
                 className="form-input" 
-                value={formData.email}
                 placeholder="username@student.nitw.ac.in" 
                 required 
                 onChange={handleChange} 
@@ -75,7 +74,6 @@ const Register = () => {
                 id="password" 
                 name="password" 
                 className="form-input" 
-                value={formData.password}
                 placeholder="••••••••" 
                 required 
                 onChange={handleChange} 

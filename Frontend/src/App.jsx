@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import SetupProfile from './pages/SetupProfile';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard'; // NEW
+import VerifyEmail from './pages/VerifyEmail';
 import './index.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/setup-profile" element={<SetupProfile />} />
         <Route path="/dashboard" element={<StudentDashboard />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
     </Router>
   );
