@@ -48,6 +48,7 @@ const Login = () => {
     //const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
   };
 
+  
   return (
     <div className="auth-page">
       <Navbar />

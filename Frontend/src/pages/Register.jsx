@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
+import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,18 +22,35 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Ensure the student is using the official college email
-    if (!formData.email.endsWith('@student.nitw.ac.in')) {
+
+    // Check college email
+    if (!formData.email.endsWith("@student.nitw.ac.in")) {
       alert("Please use your official @student.nitw.ac.in email address.");
       return;
     }
 
-    // TODO: Connect your backend API to trigger the OTP email here
-    // Example: await api.post('/auth/register', formData);
-    
-    // Navigate to the verification page AND pass the email address along in the state
-    navigate('/verify-email', { state: { email: formData.email } });
+    try {
+      // Send email + password to backend
+      await api.post("/auth/send-otp", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // OTP sent successfully → go to verification page
+      navigate("/verify-email", {
+        state: {
+          email: formData.email,
+        },
+      });
+
+    } catch (error) {
+      console.error("OTP request failed:", error);
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to send verification OTP"
+      );
+    }
   };
 
   return (
