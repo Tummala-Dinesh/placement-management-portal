@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 
+console.log("SMTP CONFIG: port 587");
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
