@@ -13,7 +13,8 @@ import transporter from "./src/config/mail.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
+console.log("EMAIL_PASSWORD exists:", !!process.env.EMAIL_PASSWORD);
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.FRONTEND_URL,
