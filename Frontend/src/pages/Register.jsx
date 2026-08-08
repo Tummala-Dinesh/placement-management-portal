@@ -30,10 +30,11 @@ const Register = () => {
     }
 
     try {
-      // Environment Toggle: Production vs Local
-      if (import.meta.env.PROD === "production") {
-        
-        // DEPLOYED: Directly register the user and skip OTP
+      // Check if we are running locally or deployed based on the browser's URL
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+      if (!isLocalhost) {
+        // DEPLOYED SITE: Directly register the user and skip OTP
         await api.post("/auth/register", {
           email: formData.email,
           password: formData.password,
@@ -43,8 +44,7 @@ const Register = () => {
         navigate("/setup-profile"); 
 
       } else {
-        
-        // LOCAL: Send email + password to backend to trigger Nodemailer[cite: 4]
+        // LOCALHOST: Send email + password to backend to trigger Nodemailer[cite: 4]
         await api.post("/auth/send-otp", {
           email: formData.email,
           password: formData.password,
