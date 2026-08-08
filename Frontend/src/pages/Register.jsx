@@ -32,18 +32,22 @@ const Register = () => {
     try {
       // Check if we are running locally or deployed based on the browser's URL
       const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-
       if (!isLocalhost) {
         // DEPLOYED SITE: Directly register the user and skip OTP
-        await api.post("/auth/register", {
+        const response = await api.post("/auth/register", {
           email: formData.email,
           password: formData.password,
         });
 
-        // Skip the verify page and go directly to setup[cite: 4]
-        navigate("/setup-profile"); 
+        // --- FIX: Save the token and role returned by registration ---
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("role", response.data.user?.role || "student");
+        }
 
-      } else {
+        navigate("/setup-profile"); 
+      }
+      else {
         // LOCALHOST: Send email + password to backend to trigger Nodemailer[cite: 4]
         await api.post("/auth/send-otp", {
           email: formData.email,
