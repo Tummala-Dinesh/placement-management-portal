@@ -1,4 +1,3 @@
-
 import jwt from "jsonwebtoken";
 import env from "dotenv";
 import bcrypt from "bcrypt";
@@ -8,6 +7,8 @@ import db from "../config/db.js";
 
 env.config();
 
+const COLLEGE_DOMAIN = "@student.nitw.ac.in";
+
 export const register = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -15,6 +16,13 @@ export const register = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         message: "All fields are required",
+      });
+    }
+
+    // --- NEW: Domain Check for Production direct-registration ---
+    if (!email.endsWith(COLLEGE_DOMAIN)) {
+      return res.status(400).json({
+        message: `Only ${COLLEGE_DOMAIN} email addresses are allowed.`,
       });
     }
 
@@ -137,9 +145,15 @@ export const sendOTP = async (req, res) => {
       });
     }
 
+    // --- NEW: Domain Check for Local OTP registration ---
+    if (!email.endsWith(COLLEGE_DOMAIN)) {
+      return res.status(400).json({
+        message: `Only ${COLLEGE_DOMAIN} email addresses are allowed.`,
+      });
+    }
+
     // Generate OTP
     const otp = generateOTP();
-
     
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -166,13 +180,18 @@ export const sendOTP = async (req, res) => {
       [email, passwordHash, otpHash, expiresAt]
     );
 
-    // Send OTP email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "College Portal - Email Verification",
-      text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
-    });
+    // --- NEW: Environment Toggle ---
+    if (process.env.NODE_ENV === "production") {
+      console.log(`[DEMO MODE] Skipped real email. OTP for ${email}: ${otp}`);
+    } else {
+      // Send OTP email in local development
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "College Portal - Email Verification",
+        text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
+      });
+    }
 
     return res.status(200).json({
       message: "OTP sent successfully",
@@ -186,6 +205,7 @@ export const sendOTP = async (req, res) => {
     });
   }
 };
+
 export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -238,47 +258,41 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    if (!isValid) {
-  return res.status(400).json({
-    message: "Invalid OTP",
-  });
-}
+    const innerResult = await db.query(
+      `
+      INSERT INTO users(email, password_hash, role)
+      VALUES($1, $2, 'student')
+      RETURNING id, email, role
+      `,
+      [
+        verification.email,
+        verification.password_hash,
+      ]
+    );
 
-const innerResult = await db.query(
-  `
-  INSERT INTO users(email, password_hash, role)
-  VALUES($1, $2, 'student')
-  RETURNING id, email, role
-  `,
-  [
-    verification.email,
-    verification.password_hash,
-  ]
-);
+    const user = innerResult.rows[0];
 
-const user = innerResult.rows[0];
+    const token = jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
-const token = jwt.sign(
-  {
-    id: user.id,
-    role: user.role,
-  },
-  process.env.JWT_SECRET,
-  {
-    expiresIn: "7d",
-  }
-);
+    await db.query(
+      `DELETE FROM email_verifications WHERE email = $1`,
+      [email]
+    );
 
-await db.query(
-  `DELETE FROM email_verifications WHERE email = $1`,
-  [email]
-);
-
-return res.status(201).json({
-  message: "Email verified and user registered successfully",
-  user,
-  token,
-});
+    return res.status(201).json({
+      message: "Email verified and user registered successfully",
+      user,
+      token,
+    });
 
   } catch (error) {
     console.error("Verify OTP error:", error);

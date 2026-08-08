@@ -23,32 +23,47 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check college email
+    // Check college email[cite: 4]
     if (!formData.email.endsWith("@student.nitw.ac.in")) {
       alert("Please use your official @student.nitw.ac.in email address.");
       return;
     }
 
     try {
-      // Send email + password to backend
-      await api.post("/auth/send-otp", {
-        email: formData.email,
-        password: formData.password,
-      });
-
-      // OTP sent successfully → go to verification page
-      navigate("/verify-email", {
-        state: {
+      // Environment Toggle: Production vs Local
+      if (import.meta.env.PROD === "production") {
+        
+        // DEPLOYED: Directly register the user and skip OTP
+        await api.post("/auth/register", {
           email: formData.email,
-        },
-      });
+          password: formData.password,
+        });
+
+        // Skip the verify page and go directly to setup[cite: 4]
+        navigate("/setup-profile"); 
+
+      } else {
+        
+        // LOCAL: Send email + password to backend to trigger Nodemailer[cite: 4]
+        await api.post("/auth/send-otp", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        // OTP sent successfully → go to verification page[cite: 4]
+        navigate("/verify-email", {
+          state: {
+            email: formData.email,
+          },
+        });
+      }
 
     } catch (error) {
-      console.error("OTP request failed:", error);
+      console.error("Registration request failed:", error);
 
       alert(
         error.response?.data?.message ||
-        "Failed to send verification OTP"
+        "Failed to process registration"
       );
     }
   };
