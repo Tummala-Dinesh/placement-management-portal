@@ -13,15 +13,12 @@ import transporter from "./src/config/mail.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
-console.log("EMAIL_PASSWORD exists:", !!process.env.EMAIL_PASSWORD);
+
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.FRONTEND_URL,
 ];
 
-console.log("FRONTEND_URL =", process.env.FRONTEND_URL);
-console.log("allowedOrigins =", allowedOrigins);
 
 app.use(
   cors({
@@ -46,31 +43,6 @@ app.use("/auth", authRoutes);
 app.use("/jobs", jobRoutes);
 app.use("/placement", placementRoutes);
 app.use("/admin", adminRoutes);
-
-
-// TEMPORARY EMAIL TEST ROUTE
-app.get("/test-email", async (req, res) => {
-  try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: "College Portal Email Test",
-      text: "Nodemailer is working successfully!",
-    });
-
-    res.json({
-      message: "Email sent successfully",
-    });
-
-  } catch (error) {
-    console.error("Email error:", error);
-
-    res.status(500).json({
-      message: "Failed to send email",
-    });
-  }
-});
-
 
 app.get("/", (req, res) => {
   res.send("Placement Management Portal API");

@@ -20,35 +20,40 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        const response = await api.post("/auth/login", {
-          email: formData.email,
-          password: formData.password,
-        });
+    e.preventDefault();
+    // Clear any existing errors before a new attempt
+    setError('');
 
-        console.log(response.data);
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("role", response.data.role);
-        if(response.data.role==="admin") {
-          navigate('/admin-dashboard');
-        }
-        else if(response.data.role==="student"){
-          navigate('/dashboard');
-        }
+    try {
+      const response = await api.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
 
-      } catch (error) {
-        console.error(error);
+      console.log(response.data);
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("role", response.data.role);
+      
+      if (response.data.role === "admin") {
+        navigate('/admin-dashboard');
+      } else if (response.data.role === "student") {
+        navigate('/dashboard');
       }
-    
-    // TODO: Replace this with your actual backend check.
-    
-    // --- MOCK LOGIC ---
-    // Simulating that only 'test@student.nitw.ac.in' is registered for testing the UI
-    //const isUserRegisteredInDatabase = formData.email === 'test@student.nitw.ac.in';
+
+    } catch (err) {
+      console.error(err);
+      
+      // Check if the backend responded with a 401 or other client/server error
+      if (err.response && err.response.status === 401) {
+        setError(err.response.data.message || "Invalid email or password.");
+      } else if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Unable to connect to the server. Please try again later.");
+      }
+    }
   };
 
-  
   return (
     <div className="auth-page">
       <Navbar />

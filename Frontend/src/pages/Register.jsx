@@ -1,74 +1,58 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import '../styles/Auth.css';
 import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   
-  // Catch any errors passed back from the VerifyEmail page
-  const errorMessage = location.state?.error;
-
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
+  const [error, setError] = useState('');
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear the error message if the user starts typing again
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
-    // Check college email[cite: 4]
+    // Check college email format
     if (!formData.email.endsWith("@student.nitw.ac.in")) {
-      alert("Please use your official @student.nitw.ac.in email address.");
+      setError("Please use your official @student.nitw.ac.in email address.");
       return;
     }
 
     try {
-      // Check if we are running locally or deployed based on the browser's URL
-      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-      if (!isLocalhost) {
-        // DEPLOYED SITE: Directly register the user and skip OTP
-        const response = await api.post("/auth/register", {
-          email: formData.email,
-          password: formData.password,
-        });
+      const response = await api.post("/auth/register", {
+        email: formData.email,
+        password: formData.password,
+      });
 
-        // --- FIX: Save the token and role returned by registration ---
-        if (response.data.token) {
-          localStorage.setItem("token", response.data.token);
-          localStorage.setItem("role", response.data.user?.role || "student");
-        }
-
-        navigate("/setup-profile"); 
-      }
-      else {
-        // LOCALHOST: Send email + password to backend to trigger Nodemailer[cite: 4]
-        await api.post("/auth/send-otp", {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        // OTP sent successfully → go to verification page[cite: 4]
-        navigate("/verify-email", {
-          state: {
-            email: formData.email,
-          },
-        });
+      // Save token and role if returned upon registration
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("role", response.data.user?.role || "student");
       }
 
-    } catch (error) {
-      console.error("Registration request failed:", error);
+      navigate("/setup-profile"); 
 
-      alert(
-        error.response?.data?.message ||
-        "Failed to process registration"
-      );
+    } catch (err) {
+      console.error("Registration request failed:", err);
+
+      // Handle backend errors (e.g., email already exists, 400 bad request, etc.)
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Failed to process registration. Please try again later.");
+      }
     }
   };
 
@@ -83,10 +67,10 @@ const Register = () => {
             <p>Create your account using your NITW email.</p>
           </div>
 
-          {/* Display verification failure errors here */}
-          {errorMessage && (
-            <div className="error-message" style={{ color: '#ef4444', backgroundColor: '#fef2f2', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', border: '1px solid #fecaca', fontSize: '0.9rem', textAlign: 'center' }}>
-              {errorMessage}
+          {/* Conditional Error Rendering */}
+          {error && (
+            <div className="error-message">
+              {error}
             </div>
           )}
 
@@ -98,6 +82,7 @@ const Register = () => {
                 id="email" 
                 name="email" 
                 className="form-input" 
+                value={formData.email}
                 placeholder="username@student.nitw.ac.in" 
                 required 
                 onChange={handleChange} 
@@ -111,6 +96,7 @@ const Register = () => {
                 id="password" 
                 name="password" 
                 className="form-input" 
+                value={formData.password}
                 placeholder="••••••••" 
                 required 
                 onChange={handleChange} 
