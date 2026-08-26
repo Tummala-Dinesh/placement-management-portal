@@ -1,0 +1,19 @@
+CREATE TABLE placements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    student_id UUID NOT NULL,
+
+    company_name VARCHAR(100) NOT NULL,
+    role_title VARCHAR(100) NOT NULL,
+    package_lpa NUMERIC(10,2) NOT NULL,
+    placement_date DATE NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_placement_student
+        FOREIGN KEY (student_id)
+        REFERENCES student_profiles(id),
+
+    CONSTRAINT chk_package
+        CHECK (package_lpa > 0)
+);
