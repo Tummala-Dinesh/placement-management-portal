@@ -1,0 +1,34 @@
+CREATE TABLE jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    company_name VARCHAR(100) NOT NULL,
+    role_title VARCHAR(100) NOT NULL,
+
+    min_cgpa NUMERIC(4,2) NOT NULL,
+    min_backlogs INTEGER NOT NULL DEFAULT 0,
+
+    allowed_branches TEXT[] NOT NULL,
+
+    ctc NUMERIC(10,2),
+    job_description TEXT,
+
+    deadline TIMESTAMP NOT NULL,
+    created_by UUID NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    apply_link TEXT,
+
+    CONSTRAINT fk_job_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id),
+
+    CONSTRAINT chk_job_cgpa
+        CHECK (min_cgpa >= 0 AND min_cgpa <= 10),
+
+    CONSTRAINT chk_job_backlogs
+        CHECK (min_backlogs >= 0),
+
+    CONSTRAINT chk_deadline
+        CHECK (deadline > created_at)
+);
