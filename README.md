@@ -7,17 +7,21 @@ A full-stack web application that streamlines the campus placement process for s
 🌐 **Application:** https://carrerconnect-lake.vercel.app/
 ## 📸 Application Preview
 
+### Webiste 
+![Website](./screenshots/intro.png)
+
 ### Login Page
 ![Login Page](./screenshots/login.png)
 
+### Register Page
+![Register Page](./screenshots/register.png)
+
 ### Student Dashboard
-![Student Dashboard](./screenshots/student-dashboard.png)
+![Student Dashboard](./screenshots/student.png)
 
 ### Admin Dashboard
-![Admin Dashboard](./screenshots/admin-dashboard.png)
+![Admin Dashboard](./screenshots/admin.png)
 
-### Job Listings
-![Job Listings](./screenshots/jobs.png)
 ## ✨ Features
 
 ### 👨‍🎓 Student
